@@ -1,6 +1,17 @@
 from django.contrib import admin
+from django import forms
 from .models import *
 from django.utils.html import mark_safe
+from ckeditor_uploader.widgets import CKEditorUploadingWidget
+
+
+class MovieAdminForm(forms.ModelForm):
+    description = forms.CharField(label="Описание", widget=CKEditorUploadingWidget)
+    #poster = forms.CharField(label="Постер", widget=CKEditorUploadingWidget)
+
+    class Meta:
+        model = Movie
+        fields = '__all__'
 
 
 @admin.register(Category)
@@ -11,7 +22,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 class ReviewInline(admin.TabularInline):
     model = Reviews
-    extra = 1
+    extra = 1                     # дополнительное пустое поле для отзыва
     readonly_fields = ('name', 'email')
 
 
@@ -34,7 +45,9 @@ class MovieAdmin(admin.ModelAdmin):
     search_fields = ('title', 'category__name',)
     inlines = [MovieShotsInline, ReviewInline]
     save_on_top = True
+    actions = ['publish', 'unpublish'] # снять/добавить галочку черновик и опубликовать несколько или снять с публикации
     save_as = True
+    form = MovieAdminForm
     list_editable = ('draft',)
     readonly_fields = ('get_image', )
     fieldsets = (
@@ -60,10 +73,36 @@ class MovieAdmin(admin.ModelAdmin):
 
     get_image.short_description = "Постер"
 
+    def unpublish(self, request, queryset):
+        row_update = queryset.update(draft=True)
+        if row_update == 1:
+            message_bit = 'Обновлена 1 запись'
+        elif 1 < row_update < 5:
+            message_bit = f'Обновлено {row_update} записи'
+        else:
+            message_bit = f'Обновлено {row_update} записей'
+        self.message_user(request, f"{message_bit}")
+
+    def publish(self, request, queryset):
+        row_update = queryset.update(draft=False)
+        if row_update == '1':
+            message_bit = 'Обновлена 1 запись'
+        elif 1 < row_update < 5:
+            message_bit = f'Обновлено {row_update} записи'
+        else:
+            message_bit = f'Обновлено {row_update} записей'
+        self.message_user(request, f"{message_bit}")
+
+    publish.short_description = "Опубликовать"
+    unpublish.short_description = "Снять с публикации"
+    publish.allowed_permissions = ('change',)
+    unpublish.allowed_permissions = ('change',)
+
+
 
 @admin.register(Reviews)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ('name','email', 'parent', 'movie', 'id')
+    list_display = ('name', 'email', 'parent', 'movie', 'id')
 
 
 @admin.register(Actor)
@@ -90,14 +129,12 @@ class MovieShotsAdmin(admin.ModelAdmin):
 
     get_image.short_description = "Изображение"
 
+
 admin.site.register(RatingStar)
 admin.site.register(Rating)
 
-# models = [Actor, (Category, CategoryAdmin), Genre, Movie, MovieShots, RatingStar, Rating, Reviews]
-# for model in models:
-#     admin.site.register(model)
 
-### Шапка админ-панели, где было написано Администрирование django ###
+# Шапка админ-панели, где было написано Администрирование django #
 admin.site.site_title = "Администрирование КиноSearch"
 admin.site.site_header = "КиноSearch"
-######
+#

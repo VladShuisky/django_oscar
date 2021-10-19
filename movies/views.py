@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.views import View
-from .models import Movie
+from .models import Movie, Category, Actor
 from django.views.generic import ListView, DetailView
 from .forms import ReviewForm
 
@@ -9,19 +9,18 @@ class MoviesView(ListView):
     """список фильмов"""
     model = Movie
     queryset = Movie.objects.filter(draft=False)
-    # def get(self, request):
-    #     movies = Movie.objects.all()
-    #     return render(request, "movies/movie_list.html", {"movies_list": movies})
 
 
 class MovieDetailView(DetailView):
     """Подробности о фильме"""
     model = Movie
     slug_field = 'url'
-    # def get(self, request, slug):
-    #     movie = Movie.objects.get(url=slug)
-    #     print(movie.description)
-    #     return render(request, "movies/movie_detail.html", {"movie": movie})
+
+class ActorView(DetailView):
+    """Подробности об актере/режиссере"""
+    model = Actor
+    template_name = 'movies/actor.html'
+    slug_field = 'name'
 
 
 class AddReview(View):
