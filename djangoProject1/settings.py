@@ -42,8 +42,10 @@ INSTALLED_APPS = [
     'movies',
     ### Плагин для редактирования админки ###
     'ckeditor',
-    'ckeditor_uploader' ### загрузчик изображений
+    'ckeditor_uploader', ### загрузчик изображений
     ### ###
+    'django_extensions'
+
 ]
 
 MIDDLEWARE = [
